@@ -166,7 +166,16 @@ class AttributeRepository extends EntityRepository implements AttributeRepositor
                         ])
                     ],
                 ])
-            ])
+            ]),
+            'updated' => new Assert\All([
+                new Assert\Collection([
+                    'operator' => new Assert\IdenticalTo([
+                        'value' => Operators::GREATER_THAN,
+                        'message' => 'Searching on the "updated" property require the ">" (greater than) operator, {{ compared_value }} given.',
+                    ]),
+                    'value' => new Assert\DateTime(),
+                ])
+            ]),
         ];
 
         $exceptionMessage = '';
@@ -178,7 +187,6 @@ class AttributeRepository extends EntityRepository implements AttributeRepositor
                     $property
                 ));
             }
-
             $violations = $validator->validate($searchFilter, $constraints[$property]);
             if (0 !== $violations->count()) {
                 foreach ($violations as $violation) {
