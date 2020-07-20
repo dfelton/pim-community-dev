@@ -122,12 +122,20 @@ class AttributeRepository extends EntityRepository implements AttributeRepositor
         $this->validateSearchFilters($searchFilters);
 
         foreach ($searchFilters as $property => $searchFilter) {
-            foreach ($searchFilter as $criterion) {
-                if (Operators::IN_LIST === $criterion['operator']) {
-                    $parameter = sprintf(':%s', $property);
-                    $qb->where($qb->expr()->in(sprintf('r.%s', $property), $parameter));
-                    $qb->setParameter($parameter, $criterion['value']);
+            foreach ($searchFilter as $key => $criterion) {
+                $parameter = sprintf(':%s_%s', $property, $key);
+                $field = sprintf('r.%s', $property);
+                switch ($criterion['operator']) {
+                    case Operators::IN_LIST:
+                        $qb->where($qb->expr()->in($field, $parameter));
+                        break;
+                    case Operators::GREATER_THAN:
+                        $qb->where($qb->expr()->gt($field, $parameter));
+                        break;
+                    default:
+                        continue 2;
                 }
+                $qb->setParameter($parameter, $criterion['value']);
             }
         }
 
@@ -139,7 +147,7 @@ class AttributeRepository extends EntityRepository implements AttributeRepositor
         if (empty($searchFilters)) {
             return;
         }
-        $availableSearchFilters = ['code'];
+        $availableSearchFilters = ['code', 'updated'];
         $validator = Validation::createValidator();
         $constraints = [
             'code' => new Assert\All([
